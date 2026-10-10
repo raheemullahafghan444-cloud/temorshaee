@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timurshahi Exchange</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: #eef2f5; }
+
+        /* === LOGIN === */
+        #loginScreen {
+            position: fixed; inset: 0;
+            background: linear-gradient(135deg, #d4a574, #b8860b);
+            display: flex; justify-content: center; align-items: center; z-index: 100;
+        }
+        .login-box {
+            background: white; padding: 35px; border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.15); width: 340px;
+        }
+        .login-box h1 { text-align: center; color: #b8860b; margin-bottom: 25px; font-size: 22px; }
+        .login-box input {
+            width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; font-size: 15px;
+        }
+        .login-box button {
+            width: 100%; padding: 12px; background: #b8860b; color: white;
+            border: none; border-radius: 6px; font-size: 16px; cursor: pointer; margin-top: 8px;
+        }
+        .login-box button:hover { background: #9a7409; }
+        .hint { font-size: 12px; color: #888; text-align: center; margin-top: 15px; }
+
+        /* === MAIN LAYOUT === */
+        #mainScreen { display: none; min-height: 100vh; }
+        header {
+            background: white; padding: 12px 25px; display: flex;
+            justify-content: space-between; align-items: center;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+        }
+        header h1 { font-size: 19px; color: #b8860b; }
+        .user-info { display: flex; align-items: center; gap: 15px; font-size: 14px; }
+        .logout-btn { color: #dc3545; cursor: pointer; }
+
+        .wrapper { display: flex; min-height: calc(100vh - 56px); }
+        
+        /* === TOP NAV (like the screenshot) === */
+        .top-nav {
+            background: white; padding: 10px 20px; display: flex; gap: 6px; flex-wrap: wrap;
+            border-bottom: 1px solid #eee; margin-bottom: 20px; border-radius: 8px;
+        }
+        .top-nav button {
+            padding: 7px 14px; background: none; border: none; border-radius: 5px;
+            cursor: pointer; font-size: 13px; color: #555;
+        }
+        .top-nav button.active { background: #e8f5e9; color: #2e7d32; font-weight: 500; }
+        .top-nav button:hover { background: #f5f5f5; }
+
+        /* === DASHBOARD STATS ROW === */
+        .stats-row {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 12px; margin-bottom: 20px;
+        }
+        .stat-card {
+            background: white; padding: 15px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        }
+        .stat-label { font-size: 12px; color: #888; margin-bottom: 5px; }
+        .stat-value { font-size: 20px; font-weight: 600; color: #333; }
+
+        /* === CASH BOXES === */
+        .cash-row {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px; margin-bottom: 25px;
+        }
+        .cash-card {
+            background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.04);
+        }
+        .cash-title { font-size: 13px; color: #888; margin-bottom: 8px; }
+        .cash-value { font-size: 24px; font-weight: 700; }
+        .cash-afn { color: #b8860b; }
+        .cash-usd { color: #0284c7; }
+
+        /* === QUICK ACTIONS === */
+        .quick-actions {
+            display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 25px;
+        }
+        .q-btn {
+            padding: 9px 16px; border: none; border-radius: 6px; cursor: pointer; font-size: 14px;
+        }
+        .q-btn.green { background: #22c55e; color: white; }
+        .q-btn.blue { background: #3b82f6; color: white; }
+        .q-btn.amber { background: #f59e0b; color: white; }
+        .q-btn.gray { background: #e5e7eb; color: #444; }
+
+        /* === PAGES === */
+        .page { display: none; }
+        .page.active { display: block; }
+        .page h2 { font-size: 18px; margin-bottom: 18px; color: #333; }
+
+        /* === TABLE === */
+        .box { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+        table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+        th, td { padding: 11px 14px; text-align: left; border-bottom: 1px solid #f0f0f0; font-size: 14px; }
+        th { background: #fafafa; color: #666; font-weight: 500; }
+        .empty-row { text-align: center; color: #aaa; padding: 35px !important; }
+
+        /* === MODAL === */
+        .modal {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 200;
+        }
+        .modal-box {
+            background: white; padding: 25px; border-radius: 10px; width: 420px; max-width: 90%;
+        }
+        .modal-box h3 { margin-bottom: 18px; color: #b8860b; font-size: 17px; }
+        .modal-box input, .modal-box select {
+            width: 100%; padding: 10px; margin: 7px 0 14px; border: 1px solid #ddd; border-radius: 5px; font-size: 14px;
+        }
+        .modal-buttons { display: flex; gap: 10px; justify-content: flex-end; margin-top: 5px; }
+        .btn { padding: 9px 18px; border: none; border-radius: 5px; cursor: pointer; font-size: 14px; }
+        .btn.primary { background: #b8860b; color: white; }
+        .btn.secondary { background: #e5e7eb; color: #444; }
+
+        /* === SIDEBAR === */
+        .sidebar {
+            width: 230px; background: white; padding: 15px 0;
+            border-right: 1px solid #eee; flex-shrink: 0;
+        }
+        .sidebar button {
+            width: 100%; text-align: left; padding: 11px 22px;
+            background: none; border: none; font-size: 14px; cursor: pointer;
+            color: #555; border-left: 3px solid transparent;
+        }
+        .sidebar button.active {
+            background: #fef8e9; border-left-color: #b8860b; color: #b8860b; font-weight: 500;
+        }
+        .sidebar button:hover { background: #fafafa; }
+
+        .main-content { flex: 1; padding: 22px; overflow-y: auto; }
+    </style>
+</head>
+<body>
+
+<!-- ====== LOGIN PAGE ====== -->
+<div id="loginScreen">
+    <div class="login-box">
+        <h1>🏦 Timurshahi Exchange</h1>
+        <input type="text" id="username" placeholder="Username">
+        <input type="password" id="password" placeholder="Password">
+        <button onclick="login()">Sign In</button>
+        <p class="hint">Username: admin &nbsp;|&nbsp; Password: 123456</p>
+    </div>
+</div>
+
+<!-- ====== MAIN APP ====== -->
+<div id="mainScreen">
+    <header>
+        <h1>🏦 Timurshahi Exchange</h1>
+        <div class="user-info">
+            <span id="currentUser">Admin</span>
+            <span class="logout-btn" onclick="logout()">Logout</span>
+        </div>
+    </header>
+
+    <div class="wrapper">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <button class="active" onclick="showPage('dashboard')">📊 Dashboard</button>
+            <button onclick="showPage('dailybook')">📓 Daily Book</button>
+            <button onclick="showPage('customers')">👤 Customers</button>
+            <button onclick="showPage('debtors')">⚖️ Debtors & Creditors</button>
+            <button onclick="showPage('hawala')">🔄 Hawala</button>
+            <button onclick="showPage('trading')">💱 Trading</button>
+            <button onclick="showPage('expenses')">💰 Expenses</button>
+            <button onclick="showPage('reports')">📊 Reports</button>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- DASHBOARD -->
+            <div id="dashboard" class="page active">
+                <!-- Top Nav like screenshot -->
+                <div class="top-nav">
+                    <button class="active">Dashboard</button>
+                    <button>Daily Book</button>
+                    <button>Cash</button>
+                    <button>Vaults</button>
+                    <button>Customers</button>
+                    <button>Debtors & Creditors</button>
+                    <button>Hawala</button>
+                    <button>Partner Sarafa</button>
+                    <button>Trading</button>
+                    <button>Transactions</button>
+                    <button>Expenses</button>
+                    <button>Reports</button>
+                    <button>Calculator</button>
+                    <button>Settings</button>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="quick-actions">
+                    <button class="q-btn green" onclick="openDepositModal()">📥 Deposit</button>
+                    <button class="q-btn gray" onclick="openWithdrawModal()">📤 Withdraw</button>
+                    <button class="q-btn gray" onclick="openTransferModal()">↔️ Transfer</button>
+                    <button class="q-btn amber" onclick="openTradeModal()">💱 Exchange</button>
+                    <button class="q-btn green" onclick="openSendHawalaModal()">📤 Send Hawala</button>
+                    <button class="q-btn blue" onclick="openReceiveHawalaModal()">📥 Receive Hawala</button>
+                    <button class="q-btn amber" onclick="openCustomerModal()">➕ Add Customer</button>
+                </div>
+
+                <!-- Stats Row -->
+                <div class="stats-row">
+                    <div class="stat-card">
+                        <div class="stat-label">DEPOSITS<br>This month</div>
+                        <div class="stat-value" id="statDeposits">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">WITHDRAWALS<br>This month</div>
+                        <div class="stat-value" id="statWithdrawals">1</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">TRANSFERS<br>This month</div>
+                        <div class="stat-value" id="statTransfers">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">EXCHANGES<br>This month</div>
+                        <div class="stat-value" id="statExchanges">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">NEW CUSTOMERS<br>This month</div>
+                        <div class="stat-value" id="statNewCustomers">4</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">ACTIVE CUSTOMERS<br>Currently active</div>
+                        <div class="stat-value" id="statActiveCustomers">4</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">HAWALA<br>This month</div>
+                        <div class="stat-value" id="statHawala">0</div>
+                    </div>
+                </div>
+
+                <!-- Business Cash -->
+                <h3 style="font-size:15px; color:#666; margin-bottom:10px;">Business Cash</h3>
+                <div class="cash-row">
+                    <div class="cash-card">
+                        <div class="cash-title">AFN</div>
+                        <div class="cash-value cash-afn" id="cashAFN">20,000,000</div>
+                        <small style="color:#999;">Shop cash</small>
+                    </div>
+                    <div class="cash-card">
+                        <div class="cash-title">USD</div>
+                        <div class="cash-value cash-usd" id="cashUSD">99,000</div>
+                        <small style="color:#999;">Shop cash</small>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="box">
+                    <h3 style="font-size:15px; color:#666; margin-bottom:12px;">Recent Transactions</h3>
+                    <table id="activityTable">
+                        <tr><th>Time</th><th>Type</th><th>Description</th><th>Amount</th><th>Balance</th></tr>
+                        <tr><td colspan="5" class="empty-row">No transactions yet — try using the buttons above!</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- CUSTOMERS PAGE -->
+            <div id="customers" class="page">
+                <h2>Customers <button class="q-btn amber" style="margin-left:10px;" onclick="openCustomerModal()">+ Add Customer</button></h2>
+                <div class="box">
+                    <table id="customersTable">
+                        <tr><th>Name</th><th>Phone</th><th>Balance (AFN)</th><th>Actions</th></tr>
+                        <tr><td colspan="4" class="empty-row">No customers yet</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- HAWALA PAGE -->
+            <div id="hawala" class="page">
+                <h2>Hawala Management</h2>
+                <div class="quick-actions">
+                    <button class="q-btn green" onclick="openSendHawalaModal()">📤 Send Hawala</button>
+                    <button class="q-btn blue" onclick="openReceiveHawalaModal()">📥 Receive Hawala</button>
+                </div>
+                <div class="box">
+                    <table id="hawalaTable">
+                        <tr><th>Date</th><th>Hawala #</th><th>From</th><th>To</th><th>Amount</th><th>Status</th></tr>
+                        <tr><td colspan="6" class="empty-row">No hawala transactions yet</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- TRADING PAGE -->
+            <div id="trading" class="page">
+                <h2>Currency Trading</h2>
+                <button class="q-btn amber" onclick="openTradeModal()">+ New Exchange</button>
+                <div class="box">
+                    <table id="tradingTable">
+                        <tr><th>Date</th><th>Type</th><th>From</th><th>To</th><th>Amount</th><th>Rate</th><th>Total</th></tr>
+                        <tr><td colspan="7" class="empty-row">No trades yet</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- DAILY BOOK -->
+            <div id="dailybook" class="page">
+                <h2>Daily Book — <span id="bookDate"></span></h2>
+                <div class="box">
+                    <table id="dailyTable">
+                        <tr><th>Time</th><th>Description</th><th>Debit</th><th>Credit</th><th>Balance</th></tr>
+                        <tr><td colspan="5" class="empty-row">No entries today</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- DEBTORS & CREDITORS -->
+            <div id="debtors" class="page">
+                <h2>Debtors & Creditors</h2>
+                <div class="box">
+                    <p style="color:#888; padding:20px;">Coming soon...</p>
+                </div>
+            </div>
+
+            <!-- EXPENSES -->
+            <div id="expenses" class="page">
+                <h2>Expenses</h2>
+                <button class="q-btn amber" onclick="openExpenseModal()">+ Add Expense</button>
+                <div class="box">
+                    <table id="expenseTable">
+                        <tr><th>Date</th><th>Description</th><th>Amount</th><th>Recorded By</th></tr>
+                        <tr><td colspan="4" class="empty-row">No expenses recorded</td></tr>
+                    </table>
+                </div>
+            </div>
+
+            <!-- REPORTS -->
+            <div id="reports" class="page">
+                <h2>Reports</h2>
+                <div class="stats-row">
+                    <div class="stat-card" style="cursor:pointer;" onclick="alert('Monthly Report would generate here')">
+                        <div class="stat-label">Monthly Report</div>
+                        <button class="q-btn amber" style="margin-top:10px; width:100%;">Generate</button>
+                    </div>
+                    <div class="stat-card" style="cursor:pointer;" onclick="alert('Yearly Report would generate here')">
+                        <div class="stat-label">Yearly Report</div>
+                        <button class="q-btn amber" style="margin-top:10px; width:100%;">Generate</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ====== MODALS ====== -->
+<!-- Customer Modal -->
+<div id="customerModal" class="modal">
+    <div class="modal-box">
+        <h3>Add New Customer</h3>
+        <input type="text" id="custName" placeholder="Full Name">
+        <input type="text" id="custPhone" placeholder="Phone Number">
+        <div class="modal-buttons">
+            <button class="btn secondary" onclick="closeModal('customerModal')">Cancel</button>
+            <button class="btn primary" onclick="saveCustomer()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Hawala Send Modal -->
+<div id="sendHawalaModal" class="modal">
+    <div class="modal-box">
+        <h3>Send Hawala</h3>
+        <input type="text" id="hFrom" placeholder="Sender Name">
+        <input type="text" id="hTo" placeholder="Receiver Name">
+        <input type="number" id="hAmount" placeholder="Amount">
+        <div class="modal-buttons">
+            <button class="btn secondary" onclick="closeModal('sendHawalaModal')">Cancel</button>
+            <button class="btn primary" onclick="saveSendHawala()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Hawala Receive Modal -->
+<div id="receiveHawalaModal" class="modal">
+    <div class="modal-box">
+        <h3>Receive Hawala</h3>
+        <input type="text" id="rhFrom" placeholder="Sender Name">
+        <input type="text" id="rhTo" placeholder="Receiver Name">
+        <input type="number" id="rhAmount" placeholder="Amount">
+        <div class="modal-buttons">
+            <button class="btn secondary" onclick="closeModal('receiveHawalaModal')">Cancel</button>
+            <button class="btn primary" onclick="saveReceiveHawala()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Trade Modal -->
+<div id="tradeModal" class="modal">
+    <div class="modal-box">
+        <h3>Currency Exchange</h3>
+        <select id="tradeType">
+            <option value="Buy">Buy (You Buy Foreign Currency)</option>
+            <option value="Sell">Sell (You Sell Foreign Currency)</option>
+        </select>
+        <select id="tradeFrom">
+            <option value="AFN">AFN - Afghani</option>
+            <option value="USD">USD - US Dollar</option>
+        </select>
+        <select id="tradeTo">
+            <option value="USD">USD - US Dollar</option>
+            <option value="AFN">AFN - Afghani</option>
+        </select>
+        <input type="number" id="tradeAmount" placeholder="Amount">
+        <input type="number" id="tradeRate" placeholder="Exchange Rate">
+        <div class="modal-buttons">
+            <button class="btn secondary" onclick="closeModal('tradeModal')">Cancel</button>
+            <button class="btn primary" onclick="saveTrade()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Deposit Modal -->
+<div id="depositModal" class="modal">
+    <div class="modal-box">
+        <h3>Deposit (Add Cash)</h3>
+        <select id="depositCurrency">
+            <option value="AFN">AFN - Afghani</option>
+            <option value="USD">USD - US Dollar</option>
+        </select>
+        <input type="number" id="depositAmount" placeholder="Amount">
+        <input type="text" id="depositNote" placeholder="Note / Reference">
+        <div class="modal-buttons">
+            <button class="btn secondary" onclick="closeModal('depositModal')">Cancel</button>
+            <button class="btn primary" onclick="saveDeposit()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Withdraw Modal -->
+<div id="withdrawModal" class="modal">
+    <div class="modal-box">
+        <h3>Withdraw (Take Cash Out)</h3>
+        <select id="withdrawCurrency">
+            <option value="AFN">AFN - Afghani</option>
+            <option value="USD">USD - US Dollar</option>
+        </select>
+        <input type="number" id="withdrawAmount" placeholder="Amount">
+        <input type="text" id="withdrawNote" placeholder="Note / Reason">
+        <div class="modal-buttons">
+            <button class="btn secondary" onclick="closeModal('withdrawModal')">Cancel</button>
+            <button class="btn primary" onclick="saveWithdraw()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Expense Modal -->
+<div id="expenseModal" class="modal">
+    <div class="modal-box">
+        <h3>Record Expense</h3>
+        <input type="text" id="expDesc" placeholder="Expense Description">
+        <input type="number" id="expAmount" placeholder="Amount">
+        <div class="modal-buttons">
+            <button class="btn secondary" onclick="closeModal('expenseModal')">Cancel</button>
+            <button class="btn primary" onclick="saveExpense()">Save</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// === DATA STORE ===
+let cash = { AFN: 20000000, USD: 99000 };
+let customers = [];
+let transactions = [];
+let hawalaList = [];
+let trades = [];
+let expenses = [];
+let stats = { deposits: 0, withdrawals: 1, transfers: 0, exchanges: 0, newCustomers: 4, activeCustomers: 4, hawala: 0 };
+
+// === INIT ===
+document.getElementById('bookDate').textContent = new Date().toLocaleDateString();
+
+// === LOGIN ===
+function login() {
+    const u = document.getElementById('username').value;
+    const p = document.getElementById('password').value;
+    if (u === 'admin' && p === '123456') {
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('mainScreen').style.display = 'block';
+        updateUI();
+    } else {
+        alert('Invalid username or password!');
+    }
+}
+function logout() {
+    document.getElementById('mainScreen').style.display = 'none';
+    document.getElementById('loginScreen').style.display = 'flex';
+    document.getElementById('username').value = '';
+    document.getElementById('password').value = '';
+}
+
+// === PAGE SWITCH ===
+function showPage(pageId) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.sidebar button').forEach(b => b.classList.remove('active'));
+    document.getElementById(pageId).classList.add('active');
+    event.target.classList.add('active');
+}
+
+// === MODAL HELPERS ===
+function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+function getTime() { return new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); }
+function getDate() { return new Date().toLocaleDateString(); }
+function formatNumber(n) { return n.toLocaleString(); }
+
+// === UPDATE ALL UI ===
+function updateUI() {
+    document.getElementById('cashAFN').textContent = formatNumber(cash.AFN);
+    document.getElementById('cashUSD').textContent = formatNumber(cash.USD);
+    
+    document.getElementById('statDeposits').textContent = stats.deposits;
+    document.getElementById('statWithdrawals').textContent = stats.withdrawals;
+    document.getElementById('statTransfers').textContent = stats.transfers;
+    document.getElementById('statExchanges').textContent = stats.exchanges;
+    document.getElementById('statNewCustomers').textContent = stats.newCustomers;
+    document.getElementById('statActiveCustomers').textContent = stats.activeCustomers;
+    document.getElementById('statHawala').textContent = stats.hawala;
+    
+    renderActivityTable();
+    renderDailyBook();
+    renderCustomers();
+    renderHawala();
+    renderTrades();
+    renderExpenses();
+}
+
+// === ADD TRANSACTION TO TABLES ===
+function addTransaction(type, desc, amount, debit=0, credit=0) {
+    const t = { time: getTime(), date: getDate(), type, desc, amount, debit, credit };
+    transactions.unshift(t);
+    updateUI();
+}
+
+// === RENDER TABLES ===
+function renderActivityTable() {
+    const tbody = document.getElementById('activityTable').innerHTML = 
+        transactions.length === 0 
+            ? '<tr><td colspan="5" class="empty-row">No transactions yet — try using the buttons above!</td></tr>'
+            : transactions.map(t => `
+                <tr>
+                    <td>${t.time}</td>
+                    <td>${t.type}</td>
+                    <td>${t.desc}</td>
+                    <td>${t.amount}</td>
+                    <td>-</td>
+                </tr>`).join('');
+}
+
+function renderDailyBook() {
+    const tbody = document.getElementById('dailyTable').innerHTML = 
+        transactions.length === 0 
+            ? '<tr><td colspan="5" class="empty-row">No entries today</td></tr>'
+            : transactions.map(t => `
+                <tr>
+                    <td>${t.time}</td>
+                    <td>${t.desc}</td>
+                    <td>${t.debit || '-'}</td>
+                    <td>${t.credit || '-'}</td>
+                    <td>-</td>
+                </tr>`).join('');
+}
+
+function renderCustomers() {
+    const tbody = document.getElementById('customersTable').innerHTML = 
+        customers.length === 0 
+            ? '<tr><td colspan="4" class="empty-row">No customers yet</td></tr>'
+            : customers.map((c,i) => `
+                <tr>
+                    <td>${c.name}</td>
+                    <td>${c.phone}</td>
+                    <td>${formatNumber(c.balance)} AFN</td>
+                    <td><button class="btn secondary" onclick="deleteCustomer(${i})">Delete</button></td>
+                </tr>`).join('');
+}
+
+function renderHawala() {
+    const tbody = document.getElementById('hawalaTable').innerHTML = 
+        hawalaList.length === 0 
+            ? '<tr><td colspan="6" class="empty-row">No hawala transactions yet</td></tr>'
+            : hawalaList.map(h => `
+                <tr>
+                    <td>${h.date}</td>
+                    <td>${h.number}</td>
+                    <td>${h.from}</td>
+                    <td>${h.to}</td>
+                    <td>${formatNumber(h.amount)}</td>
+                    <td style="color:${h.status==='Sent'?'#22c55e':'#3b82f6'}">${h.status}</td>
+                </tr>`).join('');
+}
+
+function renderTrades() {
+    const tbody = document.getElementById('tradingTable').innerHTML = 
+        trades.length === 0 
+            ? '<tr><td colspan="7" class="empty-row">No trades yet</td></tr>'
+            : trades.map(t => `
+                <tr>
+                    <td>${t.date}</td>
+                    <td>${t.type}</td>
+                    <td>${t.fromCur}</td>
+                    <td>${t.toCur}</td>
+                    <td>${formatNumber(t.amount)}</td>
+                    <td>${formatNumber(t.rate)}</td>
+                    <td>${formatNumber(t.total)}</td>
+                </tr>`).join('');
+}
+
+function renderExpenses() {
+    const tbody = document.getElementById('expenseTable').innerHTML = 
+        expenses.length === 0 
+            ? '<tr><td colspan="4" class="empty-row">No expenses recorded</td></tr>'
+            : expenses.map(e => `
+                <tr>
+                    <td>${e.date}</td>
+                    <td>${e.description}</td>
+                    <td>${formatNumber(e.amount)} AFN</td>
+                    <td>${e.by}</td>
+                </tr>`).join('');
+}
+
+// === CUSTOMER ===
+function openCustomerModal() { openModal('customerModal'); }
+function saveCustomer() {
+    const name = document.getElementById('custName').value.trim();
+    const phone = document.getElementById('custPhone').value.trim();
+    if (!name) { alert('Please enter name!'); return; }
+    customers.push({ name, phone, balance: 0 });
+    stats.newCustomers++;
+    stats.activeCustomers++;
+    addTransaction('Customer', `Added: ${name}`, '-');
+    closeModal('customerModal');
+    document.getElementById('custName').value = '';
+    document.getElementById('custPhone').value = '';
+}
+function deleteCustomer(i) {
+    if (confirm('Delete this customer?')) {
+        customers.splice(i,1);
+        updateUI();
+    }
+}
+
+// === DEPOSIT ===
+function openDepositModal() { openModal('depositModal'); }
+function saveDeposit() {
+    const currency = document.getElementById('depositCurrency').value;
+    const amount = parseFloat(document.getElementById('depositAmount').value) || 0;
+    const note = document.getElementById('depositNote').value || 'Deposit';
+    if (amount <= 0) { alert('Enter a valid amount!'); return; }
+    cash[currency] += amount;
+    stats.deposits++;
+    addTransaction('Deposit', `${note} +${formatNumber(amount)} ${currency}`, `+${formatNumber(amount)} ${currency}`, amount, 0);
+    closeModal('depositModal');
+    document.getElementById('depositAmount').value = '';
+    document.getElementById('depositNote').value = '';
+}
+
+// === WITHDRAW ===
+function openWithdrawModal() { openModal('withdrawModal'); }
+function saveWithdraw() {
+    const currency = document.getElementById('withdrawCurrency').value;
+    const amount = parseFloat(document.getElementById('withdrawAmount').value) || 0;
+    const note = document.getElementById('withdrawNote').value || 'Withdraw';
+    if (amount <= 0) { alert('Enter a valid amount!'); return; }
+    if (cash[currency] < amount) { alert('Not enough cash!'); return; }
+    cash[currency] -= amount;
+    stats.withdrawals++;
+    addTransaction('Withdraw', `${note} -${formatNumber(amount)} ${currency}`, `-${formatNumber(amount)} ${currency}`, 0, amount);
+    closeModal('withdrawModal');
+    document.getElementById('withdrawAmount').value = '';
+    document.getElementById('withdrawNote').value = '';
+}
+
+// === HAWALA ===
+function openSendHawalaModal() { openModal('sendHawalaModal'); }
+function saveSendHawala() {
+    const from = document.getElementById('hFrom').value.trim();
+    const to = document.getElementById('hTo').value.trim();
+    const amount = parseFloat(document.getElementById('hAmount').value) || 0;
+    if (!from || !to || amount <= 0) { alert('Fill all fields!'); return; }
+    hawalaList.push({ date: getDate(), number: 'HWL-' + (hawalaList.length + 1001), from, to, amount, status: 'Sent' });
+    stats.hawala++;
+    addTransaction('Hawala Sent', `${from} → ${to}`, formatNumber(amount));
+    closeModal('sendHawalaModal');
+    document.getElementById('hFrom').value = '';
+    document.getElementById('hTo').value = '';
+    document.getElementById('hAmount').value = '';
+}
+
+function openReceiveHawalaModal() { openModal('receiveHawalaModal'); }
+function saveReceiveHawala() {
+    const from = document.getElementById('rhFrom').value.trim();
+    const to = document.getElementById('rhTo').value.trim();
+    const amount = parseFloat(document.getElementById('rhAmount').value) || 0;
+    if (!from || !to || amount <= 0) { alert('Fill all fields!'); return; }
+    hawalaList.push({ date: getDate(), number: 'HWL-' + (hawalaList.length + 1001), from, to, amount, status: 'Received' });
+    stats.hawala++;
+    addTransaction('Hawala Received', `${from} → ${to}`, formatNumber(amount));
+    closeModal('receiveHawalaModal');
+    document.getElementById('rhFrom').value = '';
+    document.getElementById('rhTo').value = '';
+    document.getElementById('rhAmount').value = '';
+}
+
+// === TRADING ===
+function openTradeModal() { openModal('tradeModal'); }
+function saveTrade() {
+    const type = document.getElementById('tradeType').value;
+    const fromCur = document.getElementById('tradeFrom').value;
+    const toCur = document.getElementById('tradeTo').value;
+    const amount = parseFloat(document.getElementById('tradeAmount').value) || 0;
+    const rate = parseFloat(document.getElementById('tradeRate').value) || 0;
+    if (amount <= 0 || rate <= 0) { alert('Enter valid numbers!'); return; }
+    const total = type === 'Buy' ? amount * rate : amount / rate;
+    trades.push({ date: getDate(), type, fromCur, toCur, amount, rate, total });
+    stats.exchanges++;
+    addTransaction(`Trade ${type}`, `${type} ${formatNumber(amount)} ${fromCur} @ ${rate}`, formatNumber(total));
+    closeModal('tradeModal');
+    document.getElementById('tradeAmount').value = '';
+    document.getElementById('tradeRate').value = '';
+}
+
+// === EXPENSES ===
+function openExpenseModal() { openModal('expenseModal'); }
+function saveExpense() {
+    const desc = document.getElementById('expDesc').value.trim();
+    const amount = parseFloat(document.getElementById('expAmount').value) || 0;
+    if (!desc || amount <= 0) { alert('Fill all fields!'); return; }
+    expenses.push({ date: getDate(), description: desc, amount, by: 'Admin' });
+    addTransaction('Expense', desc, `-${formatNumber(amount)} AFN`, 0, amount);
+    closeModal('expenseModal');
+    document.getElementById('expDesc').value = '';
+    document.getElementById('expAmount').value = '';
+}
+
+// === TRANSFER (placeholder) ===
+function openTransferModal() { alert('Transfer feature coming soon — use Deposit/Withdraw for now!'); }
+
+</script>
+</body>
+</html>
