@@ -1,21 +1,13 @@
-بسیار عالی! تمام خواسته‌های شما را یکی یکی کامل و فعال می‌سازم ✅
+متوجه شدم — ورود به سیستم کار نمی‌کند با وجود وارد کردن اطلاعات درست. این مشکل را فوراً برطرف می‌کنم و کد کامل اصلاح شده را به شما می‌دهم ✅
 
 ---
 
-## 📋 لیست تغییرات و بهبودها
-
-| شماره | درخواست شما | وضعیت |
-|---|---|---|
-| ۱ | همه دکمه‌ها و گزینه‌های بالای داشبورد کاملاً فعال و قابل استفاده شوند | ✅ انجام شد |
-| ۲ | لیست ارزها گسترش یابد — تمام ارزهای رایج جهان اضافه گردد | ✅ انجام شد |
-| ۳ | معامله و تبدیل بین هر دو ارز دلخواه امکان‌پذیر شود | ✅ انجام شد |
-| ۴ | نام‌ها و برچسب‌ها به انگلیسی اضافه گردد | ✅ انجام شد |
-| ۵ | تمام بخش‌های داشبورد فعال و آماده تست شوند | ✅ انجام شد |
-| ۶ | محاسبات و کنترل موجودی برای تمام ارزها اعمال گردد | ✅ انجام شد |
+## 🔍 علت مشکل
+در کد قبلی، تابع ورود ممکن بود به درستی اجرا نشود یا مقایسه نام کاربری و رمز عبور با حروف بزرگ/کوچک حساس بود. اکنون کامل بازبینی و ساده‌سازی شد.
 
 ---
 
-## ✅ کد کامل نهایی — نسخه ۲.۰
+## ✅ کد کامل و اصلاح شده — ورود بدون مشکل
 
 ```html
 <!DOCTYPE html>
@@ -41,13 +33,14 @@
         .login-box h1 { text-align: center; color: #b8860b; margin-bottom: 25px; font-size: 22px; }
         .login-box input {
             width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 6px; font-size: 15px;
+            box-sizing: border-box;
         }
         .login-box button {
             width: 100%; padding: 12px; background: #b8860b; color: white;
             border: none; border-radius: 6px; font-size: 16px; cursor: pointer; margin-top: 8px;
         }
         .login-box button:hover { background: #9a7409; }
-        .hint { font-size: 12px; color: #888; text-align: center; margin-top: 15px; }
+        .hint { font-size: 12px; color: #888; text-align: center; margin-top: 15px; line-height: 1.6; }
         
         /* === ساختار اصلی === */
         #mainScreen { display: none; min-height: 100vh; }
@@ -176,10 +169,13 @@
 <div id="loginScreen">
     <div class="login-box">
         <h1>🏦 صرافی تیمورشاهی<br><span style="font-size:14px; color:#888;">Timurshahi Exchange</span></h1>
-        <input type="text" id="username" placeholder="نام کاربری / Username">
-        <input type="password" id="password" placeholder="رمز عبور / Password">
+        <input type="text" id="username" placeholder="نام کاربری / Username" autocomplete="off">
+        <input type="password" id="password" placeholder="رمز عبور / Password" autocomplete="off">
         <button onclick="login()">ورود / Login</button>
-        <p class="hint">admin &nbsp;|&nbsp; 123456</p>
+        <p class="hint">
+            نام کاربری: <strong>admin</strong><br>
+            رمز عبور: <strong>123456</strong>
+        </p>
     </div>
 </div>
 
@@ -271,9 +267,7 @@
                 </div>
                 
                 <h3 style="font-size:15px; color:#666; margin:25px 0 12px;">موجودی ارزها / Currency Balances</h3>
-                <div class="cash-row" id="currencyCards">
-                    <!-- کارت‌های ارز به صورت خودکار بارگذاری می‌شوند -->
-                </div>
+                <div class="cash-row" id="currencyCards"></div>
                 
                 <div class="box">
                     <h3 style="font-size:15px; color:#666; margin-bottom:12px;">تراکنش‌های اخیر / Recent Transactions</h3>
@@ -710,18 +704,26 @@ function loadData() {
 document.getElementById('bookDate').textContent = new Date().toLocaleDateString('fa-AF');
 loadData();
 
-// === ورود و خروج ===
+// === 🔑 تابع ورود — اصلاح شده ===
 function login() {
-    const u = document.getElementById('username').value;
-    const p = document.getElementById('password').value;
-    if (u === 'admin' && p === '123456') {
+    // دریافت مقادیر و حذف فاصله‌های اضافی
+    const username = document.getElementById('username').value.trim();
+    const password = document.getElementById('password').value.trim();
+    
+    // برای اطمینان — نمایش در کنسول
+    console.log('تلاش ورود — نام کاربری:', username, 'رمز:', password);
+    
+    // مقایسه بدون حساسیت به حروف بزرگ/کوچک
+    if (username.toLowerCase() === 'admin' && password === '123456') {
+        console.log('ورود موفق');
         document.getElementById('loginScreen').style.display = 'none';
         document.getElementById('mainScreen').style.display = 'block';
         updateUI();
     } else {
-        alert('نام کاربری یا رمز عبور نادرست!\nInvalid username or password!');
+        alert('❌ نام کاربری یا رمز عبور نادرست!\nUsername or password incorrect!\n\nلطفاً استفاده کنید:\nUsername: admin\nPassword: 123456');
     }
 }
+
 function logout() {
     document.getElementById('mainScreen').style.display = 'none';
     document.getElementById('loginScreen').style.display = 'flex';
@@ -735,7 +737,6 @@ function showPage(pageId) {
     document.querySelectorAll('.sidebar button').forEach(b => b.classList.remove('active'));
     document.getElementById(pageId).classList.add('active');
     
-    // فعال کردن دکمه مربوطه در نوار کناری
     const pageNames = {
         dashboard: 'داشبورد',
         cashier: 'صندوق',
@@ -757,7 +758,6 @@ function showPage(pageId) {
         }
     });
     
-    // هماهنگی با نوار بالایی
     document.querySelectorAll('.top-nav button').forEach(btn => btn.classList.remove('active'));
     const topNavIndex = {
         dashboard: 0, dailybook: 2, customers: 3, debtors: 4,
@@ -779,6 +779,7 @@ function formatNumber(n) { return Number(n || 0).toLocaleString('fa-AF', {maximu
 // === رسم کارت‌های ارز ===
 function renderCurrencyCards(containerId) {
     const container = document.getElementById(containerId);
+    if (!container) return;
     container.innerHTML = '';
     for (let code in CURRENCIES) {
         const info = CURRENCIES[code];
@@ -813,7 +814,4 @@ function updateUI() {
     renderTrades();
     renderExpenses();
     renderAllTransactions();
-    saveData();
-}
-
-// === ثبت تر
+    save
